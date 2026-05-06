@@ -41,12 +41,6 @@ export async function POST(request) {
           errors.push('Faltan fuentes tipográficas: "Helvetica-Bold" y "Arial". Por favor, convierta los textos a contornos o adjunte las fuentes.');
           errors.push('El documento tiene el modo de color RGB. Por favor, cambie a CMYK para impresión.');
           errors.push('Hay imágenes sin incrustar (links rotos): "logo.png".');
-        } else if (file.size < 50000) { // arbitrary size check for demo
-          // Just another mock condition
-          if (Math.random() > 0.5) {
-             isValid = false;
-             errors.push('El documento tiene el modo de color RGB. Por favor, cambie a CMYK para impresión.');
-          }
         }
       }
 

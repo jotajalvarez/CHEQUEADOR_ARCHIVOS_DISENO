@@ -82,9 +82,12 @@ export async function uploadToSharepoint(fileBuffer, fileName, clientName, order
 
     const client = await getGraphClient();
     
-    // 1. Ensure Client Folder exists
+    // 1. Ensure Root Portal Folder exists
+    const portalFolder = await ensureFolder(client, "root", "Portal de Diseno");
+
+    // 2. Ensure Client Folder exists
     const sanitizedClient = clientName.replace(/[^a-zA-Z0-9-_\s]/g, '').trim() || "Cliente Desconocido";
-    const clientFolder = await ensureFolder(client, "root", sanitizedClient);
+    const clientFolder = await ensureFolder(client, portalFolder.path, sanitizedClient);
     
     // 2. Ensure Order Folder exists inside Client Folder
     const cleanOrder = orderReference ? orderReference.replace(/[^a-zA-Z0-9-_\s]/g, '').trim() : "";
@@ -116,8 +119,9 @@ export async function logFailedValidation(fileName, clientName, orderReference, 
         }
 
         const client = await getGraphClient();
+        const portalFolder = await ensureFolder(client, "root", "Portal de Diseno");
         const sanitizedClient = clientName.replace(/[^a-zA-Z0-9-_\s]/g, '').trim() || "Cliente Desconocido";
-        const clientFolder = await ensureFolder(client, "root", sanitizedClient);
+        const clientFolder = await ensureFolder(client, portalFolder.path, sanitizedClient);
         
         const cleanOrder = orderReference ? orderReference.replace(/[^a-zA-Z0-9-_\s]/g, '').trim() : "";
         const sanitizedOrder = cleanOrder || "Sin Orden";

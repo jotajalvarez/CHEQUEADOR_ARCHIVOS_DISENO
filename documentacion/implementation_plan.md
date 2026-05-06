@@ -112,3 +112,41 @@ Revisa el consenso del Consejo Directivo. Si estás de acuerdo con la estrategia
 > **Preguntas para el CEO (Tú)**
 > 1. **Lista de Asesores:** ¿Podrías darme 2 o 3 nombres de asesores para ponerlos de ejemplo en el menú desplegable del contacto?
 > 2. **Carpetas sin Orden:** Si un cliente sube un archivo pero NO pone Orden de Venta, ¿quieres que se guarde directo en la carpeta de su nombre, o que se cree una subcarpeta llamada "Sin Orden"?
+
+---
+
+# [NUEVO] Fase 4: Jerarquía de Archivos y Arquitectura B2B
+
+## Acta del Consejo y Análisis Técnico
+
+En base a tus últimas observaciones, el equipo de desarrollo y arquitectura ha analizado los requerimientos:
+
+1. **Sobre la Lógica de Múltiples Archivos:**
+   - *Diagnóstico:* En el sistema actual, cada archivo se procesa de forma **totalmente independiente**. Si envías un archivo bueno y uno malo, el bueno debería subir a SharePoint y el malo dejar un Log. Si notaste que ambos fallaron, es debido a que en el simulador temporal (hasta tener el chequeador real en Python) dejé una validación aleatoria (`Math.random()`) que rechaza el 50% de los archivos pequeños como demostración.
+   - *Solución:* Voy a eliminar esa validación aleatoria del simulador para que puedas probar lotes de archivos con certeza. Te garantizo que la arquitectura separa cada archivo; un arte fallido no contamina al resto de los archivos en el mismo envío.
+
+2. **Sobre los Usuarios Externos en Entra ID:**
+   - *Diagnóstico y Solución:* **Sí, es perfectamente posible.** Microsoft tiene una función llamada **Entra B2B Collaboration (Usuarios Invitados)**. Puedes entrar a tu portal de Azure, ir a *Users > Guest Users* e invitar a personas con correos `@gmail.com` o de otras empresas. Luego de que ellos aceptan la invitación, puedes darles permisos de lectura a la carpeta de SharePoint sin necesidad de pagarles una licencia completa de Microsoft 365.
+
+3. **Sobre la Estructura en SharePoint:**
+   - *Diagnóstico:* Tienes razón. Soltar cientos de carpetas de clientes en la raíz de "Documentos" mezclará estos archivos con los documentos generales de la empresa.
+   - *Solución:* Se propone actualizar el código para que primero busque (o cree) una "Carpeta Maestra" en la raíz llamada `Portal de Diseno`.
+
+## User Review Required
+
+Revisa los cambios propuestos para la Fase 4.
+
+### Cambios Propuestos
+
+#### [MODIFY] `portal/app/api/upload/route.js`
+- Remover la validación aleatoria (Math.random) en el backend para que el simulador sea determinista y puedas probar lotes de archivos de forma confiable. (Un archivo solo fallará si su nombre contiene "error").
+
+#### [MODIFY] `portal/lib/sharepoint.js`
+- Añadir un Nivel Superior a la estructura de directorios en SharePoint.
+- Flujo de creación de carpetas actualizado:
+  1. Root > `Portal de Diseno`
+  2. `Portal de Diseno` > `[Nombre del Cliente]`
+  3. `[Nombre del Cliente]` > `[Orden de Venta / Sin Orden]`
+  4. Depósito del archivo `.ai` o del Log de error `RECHAZADO_.txt`.
+
+Si todo te parece bien, confírmame para proceder con los ajustes en el código de backend y SharePoint.
