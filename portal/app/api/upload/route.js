@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+import { uploadToSharepoint, logFailedValidation } from '../../../lib/sharepoint';
 
 export async function POST(request) {
   try {
     const formData = await request.formData();
+    const clientName = formData.get('clientName');
     const reference = formData.get('reference');
     const files = formData.getAll('files');
 
@@ -54,10 +56,22 @@ export async function POST(request) {
         errors
       });
       
-      // TODO: Here is where we will integrate with SharePoint / Odoo Documents
-      // if (isValid) {
-      //    await uploadToSharepoint(file, reference);
-      // }
+      // Integración con SharePoint:
+      try {
+        if (isValid) {
+          // Convert File to ArrayBuffer then to Buffer for the Graph API
+          const arrayBuffer = await file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          await uploadToSharepoint(buffer, fileName, clientName, reference);
+        } else {
+          // Si falló, guardamos solo un log
+          await logFailedValidation(fileName, clientName, reference, errors);
+        }
+      } catch (spError) {
+        console.error("Failed to sync with SharePoint:", spError);
+        // We log it but don't stop the flow so the user still sees validation results
+        errors.push("Nota: Falló la sincronización con SharePoint en la nube.");
+      }
     }
 
     // Delay to simulate processing time

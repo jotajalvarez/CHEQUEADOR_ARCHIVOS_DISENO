@@ -1,38 +1,45 @@
-# Primera Versión del Portal de Diseño: Completada
+# Fase 2 Completada: Integración con SharePoint (Microsoft Graph)
 
-He completado el desarrollo de la primera versión funcional (Frontend + Backend local) del portal de captación de archivos de diseño para Sismode. 
-
-El servidor de prueba está actualmente corriendo en tu máquina en **http://localhost:3000** (puedes abrir este enlace en tu navegador para interactuar con él).
+Hemos completado el desarrollo de la Fase 2 en base a tus instrucciones. El portal web ahora tiene la lógica necesaria para comunicarse con Microsoft SharePoint, crear la estructura de carpetas `[Cliente]/[Orden de Venta]` y registrar logs si hay errores.
 
 ## ¿Qué se implementó?
 
-1. **Diseño Corporativo Premium**: Se implementó una interfaz limpia, moderna y enfocada en la experiencia del usuario (UX) usando los colores corporativos (Blanco como fondo principal con acentos en Rojo Sismode), tipografía `Inter` y componentes con *glassmorphism* y micro-animaciones al hacer *hover* o enviar el formulario.
-2. **Formulario de Captura**: 
-   - Campo para ingresar la Referencia o Número de Orden de Venta.
-   - Componente `Drag & Drop` (Arrastrar y Soltar) para poder cargar uno o varios archivos `.ai` simultáneamente.
-3. **Backend Local y Simulación de Revisiones**: 
-   - Se programó una API (`/api/upload`) dentro de Next.js que recibe los archivos.
-   - Actualmente **simula** un proceso de revisión. Si subes un archivo cuyo nombre contenga la palabra "error", simulará que el chequeador encontró fallas (Faltan fuentes tipográficas, Modo de color RGB en lugar de CMYK, links rotos). Si el nombre no contiene error, simulará una subida exitosa.
-   - También valida estrictamente que la extensión sea `.ai` o `.pdf`.
-4. **Modal de Contacto**: Se implementó un botón para "Contactar a mi Asesor", el cual abre un modal profesional con un formulario de contacto directo sin redirigir al usuario fuera de la página.
+1. **Nuevo Servicio de SharePoint (`lib/sharepoint.js`)**: 
+   - Utiliza `@microsoft/microsoft-graph-client` y `@azure/msal-node`.
+   - Se conecta a SharePoint vía la API Graph de Microsoft usando el flujo de *Client Credentials* (comunicación Servidor-a-Servidor sin intervención del usuario final).
+   - Genera automáticamente las carpetas anidadas de Cliente y Orden.
+   - Sube el archivo validado, o en caso de ser rechazado por la validación técnica, sube un archivo `RECHAZADO_[nombre]_log.txt` con los errores.
 
-## Grabación de la Interfaz
+2. **Actualización de Interfaz (`app/page.js`)**:
+   - Se agregó un nuevo campo obligatorio en el formulario: **"Nombre del Cliente"**.
+   - Esto permite construir la estructura de carpetas requerida.
 
-A continuación, una grabación interactuando con el flujo de subida y el modal de contacto en tu servidor local:
+3. **Backend Actualizado (`app/api/upload/route.js`)**:
+   - Una vez validado localmente el archivo `.ai`, el backend toma el *Buffer* del archivo y lo inyecta a la nube de manera segura.
 
-![Grabación del Portal de Sismode](file:///C:/Users/Jose%20Alvarez/.gemini/antigravity/brain/f7f7da9f-1ded-4763-a4fc-937769749426/portal_upload_test_1777486280058.webp)
+## Lo que falta: Credenciales de Producción
+
+El código actual es tolerante a fallos: si no encuentra credenciales configuradas, igual permite probar el flujo local sin crashear. Para que los archivos se envíen de verdad a SharePoint, necesitas configurar las siguientes variables de entorno:
+
+### 1. Variables de Entorno Requeridas
+
+Crea un archivo `.env.local` en la carpeta `portal` con la siguiente estructura:
+
+```env
+SHAREPOINT_TENANT_ID=tu-tenant-id-de-azure
+SHAREPOINT_CLIENT_ID=tu-client-id-de-la-app-registrada
+SHAREPOINT_CLIENT_SECRET=tu-secreto-generado
+SHAREPOINT_SITE_ID=id-del-sitio-sharepoint
+SHAREPOINT_DRIVE_ID=id-de-la-libreria-de-documentos
+```
+
+### 2. ¿Cómo obtener estos datos?
+1. **App Registration (Azure AD)**: Entra a [portal.azure.com](https://portal.azure.com) y registra una nueva aplicación.
+2. Anota el `Directory (tenant) ID` y el `Application (client) ID`.
+3. Crea un `Client secret` (y copia el valor).
+4. Dale permisos de API a la App: `Microsoft Graph > Application Permissions > Files.ReadWrite.All` y `Sites.ReadWrite.All`. ¡Recuerda dar "Admin Consent"!
+5. Los IDs de Sitio y Drive (`SHAREPOINT_SITE_ID`, `SHAREPOINT_DRIVE_ID`) los puedes sacar haciendo un llamado a Graph Explorer o mediante PowerShell.
 
 > [!TIP]
-> **Pruébalo tú mismo**
-> 1. Asegúrate de tener archivos `.ai` de prueba a la mano.
-> 2. Entra a `http://localhost:3000`.
-> 3. Sube un archivo llamado `diseno.ai` para ver el caso de éxito.
-> 4. Sube un archivo llamado `diseno_error.ai` para ver cómo se le presentan las fallas al cliente.
-
-## Próximos Pasos (Integración)
-
-Como acordamos en el plan, el siguiente gran paso es conectar el backend. Una vez que el archivo sea subido y "aprobado", en lugar de quedarse en el servidor local, lo enviaremos automáticamente a:
-- **SharePoint** (usando Microsoft Graph API).
-- O a **Odoo Documents** (usando XML-RPC/REST).
-
-¿Te gustaría probar el demo en tu navegador y confirmar si el diseño y los mensajes mostrados van en la línea que buscas antes de avanzar con la arquitectura para conectar SharePoint/Odoo?
+> **Prueba el flujo actual**
+> Puedes correr `npm run dev` en la carpeta `portal` y verás la interfaz actualizada con el campo de Cliente y el formulario interactivo. El sistema intentará mandar a SharePoint pero como no hay llaves, lo omitirá graciosamente e igual mostrará éxito/error en la validación local.

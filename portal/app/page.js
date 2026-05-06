@@ -4,12 +4,22 @@ import { useState } from 'react';
 import FileUpload from '@/components/FileUpload';
 import ValidationResults from '@/components/ValidationResults';
 
+const ASESORES = [
+  "Gustavo Mena", "Gabriel Cabrera", "Maria Fernanda Castro", "Nestor Ramirez",
+  "Marco Amores", "Fernando Villavicencio", "Valeria Rodriguez", "Jorge Cabello",
+  "Gary Quilligana", "Juan Jose Herrero", "Gabriela Avila", "Daniela Avila",
+  "Omar Rivera", "Renan Acosta"
+];
+
 export default function Home() {
+  const [clientName, setClientName] = useState('');
   const [reference, setReference] = useState('');
   const [files, setFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState([]);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [selectedAsesor, setSelectedAsesor] = useState('');
 
   const handleFilesSelected = (selectedFiles) => {
     // Only add files that aren't already added (based on name)
@@ -25,8 +35,10 @@ export default function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!reference || files.length === 0) {
-      alert("Por favor, ingrese la Referencia / Orden y seleccione al menos un archivo.");
+    setErrorMessage('');
+
+    if (!clientName || files.length === 0) {
+      setErrorMessage("Por favor, ingrese el Nombre del Cliente y seleccione al menos un archivo.");
       return;
     }
 
@@ -34,6 +46,7 @@ export default function Home() {
     
     // Create FormData
     const formData = new FormData();
+    formData.append('clientName', clientName);
     formData.append('reference', reference);
     files.forEach(file => {
       formData.append('files', file);
@@ -49,7 +62,7 @@ export default function Home() {
       setResults(data.results);
     } catch (error) {
       console.error("Error al subir los archivos:", error);
-      alert("Ocurrió un error al procesar los archivos. Por favor, intente nuevamente.");
+      setErrorMessage("Ocurrió un error al procesar los archivos. Por favor, intente nuevamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -65,20 +78,42 @@ export default function Home() {
       </div>
 
       <div className="card">
+        {errorMessage && (
+          <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid #f87171', animation: 'shake 0.5s' }}>
+            <strong>Error: </strong> {errorMessage}
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="reference">
-              Referencia o Número de Orden de Venta
-            </label>
-            <input 
-              id="reference"
-              type="text" 
-              className="form-input" 
-              placeholder="Ej: ORD-2023-001 o Nombre de Proyecto"
-              value={reference}
-              onChange={(e) => setReference(e.target.value)}
-              required
-            />
+          <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label className="form-label" htmlFor="clientName">
+                Nombre del Cliente
+              </label>
+              <input 
+                id="clientName"
+                type="text" 
+                className="form-input" 
+                placeholder="Ej: Sismode SA"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="form-label" htmlFor="reference">
+                Orden de Venta / Proyecto
+              </label>
+              <input 
+                id="reference"
+                type="text" 
+                className="form-input" 
+                placeholder="Ej: ORD-2023-001"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+              />
+              <small style={{ color: 'var(--text-light)', fontSize: '0.8rem', display: 'block', marginTop: '0.25rem' }}>
+                Opcional, pero sugerido para mayor rapidez.
+              </small>
+            </div>
           </div>
 
           <div className="form-group">
@@ -119,7 +154,7 @@ export default function Home() {
             <button 
               type="submit" 
               className="btn btn-primary"
-              disabled={isSubmitting || files.length === 0 || !reference}
+              disabled={isSubmitting}
             >
               {isSubmitting ? 'Procesando...' : 'Revisar Archivos'}
             </button>
@@ -143,6 +178,19 @@ export default function Home() {
               Envíe un mensaje a su asesor comercial para recibir ayuda con sus archivos.
             </p>
             <div className="form-group">
+              <label className="form-label">Asesor Asignado</label>
+              <select 
+                className="form-input"
+                value={selectedAsesor}
+                onChange={(e) => setSelectedAsesor(e.target.value)}
+              >
+                <option value="" disabled>Seleccione a su Asesor</option>
+                {ASESORES.map(asesor => (
+                  <option key={asesor} value={asesor}>{asesor}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
               <label className="form-label">Mensaje</label>
               <textarea 
                 className="form-input" 
@@ -154,7 +202,11 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
               <button className="btn btn-outline" onClick={() => setShowContactModal(false)}>Cancelar</button>
               <button className="btn btn-primary" onClick={() => {
-                alert("Mensaje enviado a su asesor.");
+                if (!selectedAsesor) {
+                  alert("Por favor, seleccione a su asesor.");
+                  return;
+                }
+                alert(`Mensaje enviado a su asesor: ${selectedAsesor}.`);
                 setShowContactModal(false);
               }}>Enviar Mensaje</button>
             </div>

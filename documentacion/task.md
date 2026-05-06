@@ -1,10 +1,11 @@
-# Lista de Tareas: Portal de Diseño Sismode (Fase 1)
+# Lista de Tareas: Fase 3 (Refinamiento UX y Asignación de Asesores)
 
-- [x] Configurar estilos globales (`globals.css`) con los colores corporativos (Blanco y detalles Rojos).
-- [x] Crear la página principal (`app/page.js`) con el diseño premium y el formulario de captura (Nombre/Orden de Venta).
-- [x] Implementar el componente de carga de archivos (Drag & Drop) `components/FileUpload.js`.
-- [x] Implementar el panel de resultados de validación `components/ValidationResults.js`.
-- [x] Implementar el botón/modal para "Contactar Asesor".
-- [x] Crear el endpoint del backend local (`app/api/upload/route.js`) para recibir archivos y simular validaciones de `.ai` (fuentes, color CMYK, imágenes incrustadas).
-- [x] Conectar el frontend con el backend local.
-- [x] Probar el flujo completo.
+- [ ] Modificar `portal/app/page.js`:
+  - [ ] Quitar la propiedad `required` del input de "Orden de Venta / Proyecto".
+  - [ ] Añadir etiqueta de "Opcional, pero sugerido para mayor rapidez".
+  - [ ] Actualizar la condición de `disabled` del botón "Revisar Archivos" para no requerir la Orden de Venta.
+  - [ ] Implementar un estado `errorMessage` para reemplazar las alertas del navegador por alertas integradas en el DOM y darle estilo de UX/UI moderno.
+  - [ ] En el Modal de Contacto, agregar un dropdown o elemento `<select>` con la lista de los 14 asesores comerciales.
+- [ ] Modificar `portal/lib/sharepoint.js`:
+  - [ ] Actualizar la lógica para que, si no se envía la Orden de Venta, se asigne automáticamente el valor `"Sin Orden"` a la subcarpeta.
+- [x] Ejecutar compilación de Next.js para validar sintaxis.
